@@ -162,7 +162,8 @@ class HttpHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
   def parse_query(self):
     length = int(self.headers['content-length'])
-    query = urlparse.parse_qs(self.rfile.read(length)).get('query', [None])[0]
+    qs = urlparse.parse_qs(self.rfile.read(length).strip())
+    query = qs.get('query', [None])[0]
     return query
 
   def build_response(self, query):
