@@ -8,6 +8,7 @@ import urlparse
 import subprocess
 import contextlib
 import BaseHTTPServer
+from collections import OrderedDict
 from itertools import groupby
 from operator import itemgetter
 
@@ -80,25 +81,7 @@ class NER(object):
       tagged_text = s.recv(10 * len(text))
     return tagged_text
 
-  def __slashTags_parse_entities(self, tagged_text):
-    """Return a list of token tuples (entity_type, token) parsed
-    from slashTags-format tagged text.
-
-    Args:
-      tagged_text: slashTag-format entity tagged text.
-    """
-    return (m.groups()[::-1] for m in SLASHTAGS_EPATTERN.finditer(tagged_text))
-
-  def __xml_parse_entities(self, tagged_text):
-    """Return a list of token tuples (entity_type, token) parsed
-    from xml-format tagged text.
-
-    Args:
-      tagged_text: xml-format entity tagged text.
-    """
-    return (m.groups() for m in XML_EPATTERN.finditer(tagged_text))
-
-  def __inlineXML_parse_entities(self, tagged_text):
+  def _parse_entities(self, tagged_text):
     """Return a list of entity tuples (entity_type, entity) parsed
     from inlineXML-format tagged text.
 
@@ -107,7 +90,7 @@ class NER(object):
     """
     return (m.groups() for m in INLINEXML_EPATTERN.finditer(tagged_text))
 
-  def __collapse_to_dict(self, pairs):
+  def _collapse_to_dict(self, pairs):
     """Return a dictionary mapping the first value of every pair
     to a collapsed list of all the second values of every pair.
 
@@ -116,15 +99,7 @@ class NER(object):
     """
     d = dict((first, map(itemgetter(1), second)) for (first, second)
              in groupby(sorted(pairs, key=itemgetter(0)), key=itemgetter(0)))
-    result = {}
-    for u, v in d.items():
-      for l in v:
-        result.setdefault(u, set()).add(l)
-    r = {}
-    for u, v in result.items():
-      for k in v:
-        r.setdefault(u, []).append(k)
-    return r
+    return {k: list(OrderedDict.fromkeys(v)) for k, v in d.iteritems()}
 
   def get_entities(self, text):
     """Return all the named entities in text as a dict.
@@ -136,23 +111,17 @@ class NER(object):
       A dict of entity type to list of entities of that type.
     """
     tagged_text = self.tag_text(text)
-    if self.oformat == 'slashTags':
-      entities = self.__slashTags_parse_entities(tagged_text)
-      entities = ((etype, " ".join(t[1] for t in tokens)) for (etype, tokens) in
-                  groupby(entities, key=itemgetter(0)))
-    elif self.oformat == 'xml':
-      entities = self.__xml_parse_entities(tagged_text)
-      entities = ((etype, " ".join(t[1] for t in tokens)) for (etype, tokens) in
-                  groupby(entities, key=itemgetter(0)))
-    else:
-      entities = self.__inlineXML_parse_entities(tagged_text)
-    return self.__collapse_to_dict(entities)
+    entities = self._parse_entities(tagged_text)
+    return self._collapse_to_dict(entities)
 
   def json_entities(self, text):
     """Return a JSON encoding of named entities in text.
 
-    :param text: string to parse entities
-    :returns: a JSON dump of entities parsed from text
+    Args:
+      text: string to parse entities.
+
+    Returns:
+      A JSON dump of entities parsed from text.
     """
     return json.dumps(self.get_entities(text))
 
