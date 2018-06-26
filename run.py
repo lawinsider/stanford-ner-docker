@@ -15,7 +15,7 @@ from operator import itemgetter
 
 STANFORD_PARSER = os.path.abspath('stanford-ner.jar')
 STANFORD_MODEL = os.path.abspath(
-  'classifiers/english.all.7class.distsim.crf.ser.gz')
+  'classifiers/english.muc.7class.distsim.crf.ser.gz')
 SLASHTAGS_EPATTERN = re.compile(r'(.+?)/([A-Z]+)?\s*')
 XML_EPATTERN = re.compile(r'<wi num=".+?" entity="(.+?)">(.+?)</wi>')
 INLINEXML_EPATTERN = re.compile(r'<([A-Z]+?)>(.+?)</\1>')
@@ -165,8 +165,10 @@ if __name__ == '__main__':
   print 'Starting Stanford NER TCP server...'
   start_ner_server(STANFORD_PARSER, STANFORD_MODEL)
   print 'Starting HTTP proxy server...'
+  port = int(os.environ.get('PORT', '80'))
+  print 'Listening on port %s...' % port
   try:
-    server = BaseHTTPServer.HTTPServer(('0.0.0.0', 80), HttpHandler)
+    server = BaseHTTPServer.HTTPServer(('0.0.0.0', port), HttpHandler)
     server.serve_forever()
   except KeyboardInterrupt:
     print('Stopping NER server..')
