@@ -35,3 +35,8 @@ Note that if you use OSX with boot2docker you will need to use `boot2docker ip` 
     $ docker run -d -p 4465:80 lawinsider/stanford-ner-docker
     $ curl "localhost?query=This%20Mortgage%20Loan%20Purchase%20Agreement,%20dated%20as%20of%20February%2025,%202015,%20is%20between%20J.P.%20Morgan%20Chase%20Commercial%20Mortgage%20Securities%20Corp.,%20as%20purchaser%20and%20Barclays%20Bank%20PLC,%20as%20seller."
     {"DATE": ["February 25, 2015"], "ORGANIZATION": ["J.P. Morgan Chase Commercial Mortgage Securities Corp.", "Barclays Bank PLC"]}
+
+## Deployment
+
+The image respects the `PORT` environment variable, making it suitable for deployment on most modern container hosts.
+
